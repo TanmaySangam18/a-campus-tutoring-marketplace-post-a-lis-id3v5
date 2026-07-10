@@ -55,7 +55,7 @@ function Field({
       <label htmlFor={htmlFor} className="text-sm font-medium text-zinc-700">
         {label}
       </label>
-      <div className="mt-1.5">{children}</div>
+      <div className="mt-2">{children}</div>
       {hint && <p className="mt-1 text-xs text-zinc-400">{hint}</p>}
     </div>
   );
@@ -64,6 +64,7 @@ function Field({
 export default function Home() {
   const [listings, setListings] = useState<Listing[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const [form, setForm] = useState<FormState>(initialForm);
   const [formError, setFormError] = useState<string | null>(null);
@@ -87,7 +88,7 @@ export default function Home() {
       setListings(data.listings);
     } catch {
       setLoadError(
-        "Couldn't load listings. Check your connection and try again."
+        "Couldn't load tutoring listings. Check your connection and try again."
       );
     }
   }, []);
@@ -147,6 +148,7 @@ export default function Home() {
   }
 
   async function handleDelete(id: string) {
+    setDeleteError(null);
     setDeletingId(id);
     try {
       const res = await fetch("/api/items", {
@@ -157,7 +159,7 @@ export default function Home() {
       if (!res.ok) throw new Error("Request failed");
       setListings((prev) => (prev ?? []).filter((item) => item.id !== id));
     } catch {
-      setLoadError("Couldn't remove that listing. Try again.");
+      setDeleteError("Couldn't remove that listing — try again.");
     } finally {
       setDeletingId(null);
     }
@@ -166,7 +168,7 @@ export default function Home() {
   async function handleBook(listingId: string, slotId: string) {
     const key = `${listingId}:${slotId}`;
     if (!bookingName.trim()) {
-      setBookingError("Enter your name to reserve this slot.");
+      setBookingError("Enter your name to reserve this session.");
       return;
     }
     setBookingError(null);
@@ -191,7 +193,7 @@ export default function Home() {
       setActiveSlotKey(null);
       setBookingName("");
     } catch {
-      setBookingError("Couldn't book that slot. Try again.");
+      setBookingError("Couldn't book that session. Try again.");
     } finally {
       setBookingLoadingKey(null);
     }
@@ -199,9 +201,9 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-zinc-50">
-      <div className="mx-auto max-w-5xl px-6 py-16 sm:px-8">
+      <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-16 lg:px-8">
         <header className="mb-12 max-w-2xl">
-          <h1 className="text-3xl font-semibold tracking-tight text-zinc-900 sm:text-4xl">
+          <h1 className="text-4xl font-semibold tracking-tight text-zinc-900 sm:text-5xl">
             Campus Tutors
           </h1>
           <p className="mt-3 text-lg leading-8 text-zinc-600">
@@ -308,14 +310,20 @@ export default function Home() {
           {/* Listings column */}
           <section>
             {loadError && (
-              <div className="mb-6 flex items-center justify-between rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              <div className="mb-6 flex items-center justify-between gap-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                 <span>{loadError}</span>
                 <button
                   onClick={loadListings}
-                  className="font-semibold underline underline-offset-2 transition duration-150 hover:text-red-800"
+                  className="whitespace-nowrap font-semibold underline underline-offset-2 transition duration-150 hover:text-red-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
                 >
                   Retry
                 </button>
+              </div>
+            )}
+
+            {deleteError && (
+              <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {deleteError}
               </div>
             )}
 
@@ -338,7 +346,7 @@ export default function Home() {
             {listings !== null && listings.length === 0 && (
               <div className="rounded-xl border border-dashed border-zinc-300 bg-white px-6 py-16 text-center">
                 <p className="text-base font-semibold text-zinc-900">
-                  No tutors posted yet
+                  No tutoring sessions posted yet
                 </p>
                 <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-zinc-500">
                   Be the first — post a listing on the left and students on
@@ -361,7 +369,7 @@ export default function Home() {
                           <h3 className="text-base font-semibold text-zinc-900">
                             {listing.subject}
                           </h3>
-                          <p className="mt-0.5 text-sm text-zinc-500">
+                          <p className="mt-1 text-sm text-zinc-500">
                             with {listing.tutorName}
                           </p>
                         </div>
@@ -390,7 +398,7 @@ export default function Home() {
                             Available times
                           </p>
                           {openSlots.length === 0 && (
-                            <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-500">
+                            <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-500">
                               Fully booked
                             </span>
                           )}
@@ -404,7 +412,7 @@ export default function Home() {
                             if (slot.booked) {
                               return (
                                 <li key={slot.id}>
-                                  <span className="inline-flex items-center rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-sm text-zinc-400 line-through decoration-zinc-300">
+                                  <span className="inline-flex items-center rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-400 line-through decoration-zinc-300">
                                     {slot.label}
                                   </span>
                                 </li>
@@ -419,10 +427,10 @@ export default function Home() {
                                     setBookingError(null);
                                     setBookingName("");
                                   }}
-                                  className={`inline-flex items-center rounded-lg border px-3 py-1.5 text-sm font-medium transition duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 ${
+                                  className={`inline-flex items-center rounded-lg border px-3 py-2 text-sm font-medium transition duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 ${
                                     isActive
-                                      ? "border-indigo-600 bg-indigo-50 text-indigo-700"
-                                      : "border-zinc-200 text-zinc-700 hover:border-indigo-300 hover:bg-indigo-50/50"
+                                      ? "border-zinc-900 bg-zinc-900 text-white"
+                                      : "border-zinc-200 text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50"
                                   }`}
                                 >
                                   {slot.label}
@@ -445,10 +453,10 @@ export default function Home() {
                                         setBookingName(e.target.value)
                                       }
                                       placeholder="Jordan Lee"
-                                      className="mt-1.5 w-full rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-zinc-900 outline-none transition duration-150 focus:border-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                                      className="mt-2 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none transition duration-150 focus:border-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                                     />
                                     {bookingError && (
-                                      <p className="mt-1.5 text-xs text-red-600">
+                                      <p className="mt-2 text-xs text-red-600">
                                         {bookingError}
                                       </p>
                                     )}
@@ -458,7 +466,7 @@ export default function Home() {
                                           handleBook(listing.id, slot.id)
                                         }
                                         disabled={bookingLoadingKey === key}
-                                        className="flex-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition duration-150 hover:bg-indigo-500 disabled:opacity-60"
+                                        className="flex-1 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition duration-150 hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-60"
                                       >
                                         {bookingLoadingKey === key
                                           ? "Booking…"
@@ -466,7 +474,7 @@ export default function Home() {
                                       </button>
                                       <button
                                         onClick={() => setActiveSlotKey(null)}
-                                        className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 transition duration-150 hover:bg-zinc-50"
+                                        className="rounded-lg border border-zinc-200 px-3 py-2 text-xs font-medium text-zinc-600 transition duration-150 hover:bg-zinc-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                                       >
                                         Cancel
                                       </button>
